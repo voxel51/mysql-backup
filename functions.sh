@@ -71,11 +71,6 @@ function uri_parser() {
     uri[path]=${BASH_REMATCH[11]}
     uri[query]=${BASH_REMATCH[12]}
     uri[fragment]=${BASH_REMATCH[13]}
-		if [[ ${uri[schema]} == "smb" && ${uri[path]} =~ ^/([^/]*)(/?.*)$ ]]; then
-			uri[share]=${BASH_REMATCH[1]}
-			uri[sharepath]=${BASH_REMATCH[2]}
-		fi
-
 		# does the user have a domain?
 		if [[ -n ${uri[user]} && ${uri[user]} =~ ^([^\;]+)\;(.+)$ ]]; then
 			uri[userdomain]=${BASH_REMATCH[1]}
@@ -192,30 +187,14 @@ function backup_target() {
       [ -n "$DB_DUMP_KEEP_PERMISSIONS" -a "$DB_DUMP_KEEP_PERMISSIONS" = "false" ] && cpOpts=""
       cp $cpOpts ${TMPDIR}/${SOURCE} ${uri[path]}/${TARGET}
       ;;
+    "gs")
+      gsutil cp "${TMPDIR}/${SOURCE}" "${DB_DUMP_TARGET}/${TARGET}"
+      ;;
     "s3")
       # allow for endpoint url override
       [[ -n "$AWS_ENDPOINT_URL" ]] && AWS_ENDPOINT_OPT="--endpoint-url $AWS_ENDPOINT_URL"
       aws ${AWS_ENDPOINT_OPT} s3 cp ${TMPDIR}/${SOURCE} "${DB_DUMP_TARGET}/${TARGET}"
       ;;
-    "smb")
-      if [[ -n "$SMB_USER" ]]; then
-        UPASSARG="-U"
-        UPASS="${SMB_USER}%${SMB_PASS}"
-      elif [[ -n "${uri[user]}" ]]; then
-        UPASSARG="-U"
-        UPASS="${uri[user]}%${uri[password]}"
-      else
-        UPASSARG=
-        UPASS=
-      fi
-      if [[ -n "${uri[userdomain]}" ]]; then
-        UDOM="-W ${uri[userdomain]}"
-      else
-        UDOM=
-      fi
-
-      smbclient -N "//${uri[host]}/${uri[share]}" ${UPASSARG} "${UPASS}" ${UDOM} -c "cd ${uri[sharepath]}; put ${TMPDIR}/${SOURCE} ${TARGET}"
-     ;;
   esac
   [ $? -ne 0 ] && return 1
   return 0

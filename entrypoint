@@ -29,9 +29,6 @@ file_env "AWS_ACCESS_KEY_ID"
 file_env "AWS_SECRET_ACCESS_KEY"
 file_env "AWS_DEFAULT_REGION"
 
-file_env "SMB_USER"
-file_env "SMB_PASS"
-
 file_env "COMPRESSION" "gzip"
 
 if [[ -n "$DB_DUMP_DEBUG" ]]; then
@@ -111,23 +108,6 @@ if [[ -n "$DB_RESTORE_TARGET" ]]; then
   elif [[ "${uri[schema]}" == "s3" ]]; then
     [[ -n "$AWS_ENDPOINT_URL" ]] && AWS_ENDPOINT_OPT="--endpoint-url $AWS_ENDPOINT_URL"
       aws ${AWS_ENDPOINT_OPT} s3 cp "${DB_RESTORE_TARGET}" $TMPRESTORE
-  elif [[ "${uri[schema]}" == "smb" ]]; then
-    if [[ -n "$SMB_USER" ]]; then
-      UPASSARG="-U"
-      UPASS="${SMB_USER}%${SMB_PASS}"
-    elif [[ -n "${uri[user]}" ]]; then
-      UPASSARG="-U"
-      UPASS="${uri[user]}%${uri[password]}"
-    else
-      UPASSARG=
-      UPASS=
-    fi
-    if [[ -n "${uri[userdomain]}" ]]; then
-      UDOM="-W ${uri[userdomain]}"
-    else
-      UDOM=
-    fi
-    smbclient -N "//${uri[host]}/${uri[share]}" ${UPASSARG} "${UPASS}" ${UDOM} -c "get ${uri[sharepath]} ${TMPRESTORE}"
   fi
   # did we get a file?
   if [[ -f "$TMPRESTORE" ]]; then
