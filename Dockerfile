@@ -1,5 +1,5 @@
 # mysql backup image
-FROM alpine:3.9
+FROM alpine:3.11
 MAINTAINER Avi Deitcher <https://github.com/deitch>
 
 ENV PATH $PATH:/usr/local/bin/google-cloud-sdk/bin
